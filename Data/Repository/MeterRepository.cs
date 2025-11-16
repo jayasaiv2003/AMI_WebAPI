@@ -168,15 +168,36 @@ namespace AMI_WebAPI.Data.Repository
 
 
         // 🔹 Delete meter
+        //public async Task<bool> DeleteMeterAsync(string meterSerialNo)
+        //{
+        //    var meter = await _context.Meters.FindAsync(meterSerialNo);
+        //    if (meter == null) return false;
+
+        //    meter.Status = "Inactive"; // Soft delete
+        //    await _context.SaveChangesAsync();
+
+        //    return true;
+        //}
+
         public async Task<bool> DeleteMeterAsync(string meterSerialNo)
         {
-            var entity = await _context.Meters.FindAsync(meterSerialNo);
-            if (entity == null) return false;
+            var meter = await _context.Meters
+                .Include(m => m.DailyReadings)
+                .Include(m => m.MonthlyBills)
+                .FirstOrDefaultAsync(m => m.MeterSerialNo == meterSerialNo);
 
-            _context.Meters.Remove(entity);
+            if (meter == null) return false;
+
+            _context.DailyReadings.RemoveRange(meter.DailyReadings);
+            _context.MonthlyBills.RemoveRange(meter.MonthlyBills);
+
+            _context.Meters.Remove(meter);
+
             await _context.SaveChangesAsync();
             return true;
         }
+
+
 
         // 🔹 Update meter status
         public async Task<bool> UpdateMeterStatusAsync(string meterSerialNo, string newStatus)

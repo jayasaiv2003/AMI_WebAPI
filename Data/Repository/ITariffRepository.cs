@@ -21,5 +21,7 @@ namespace AMI_WebAPI.Data.Repository
 
         // 🔹 Check if a tariff with the same name exists (optional validation)
         Task<bool> TariffExistsByNameAsync(string name);
+
+        Task<bool> TariffDateOverlapAsync(string name, DateOnly from, DateOnly to);
     }
 }

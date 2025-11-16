@@ -36,15 +36,23 @@ namespace AMI_WebAPI.Controllers
         }
 
         // 🔹 3. Add a new tariff
+        //[HttpPost("add-tariff")]
         [HttpPost("add-tariff")]
         public async Task<IActionResult> AddTariff([FromBody] TariffDTO model)
         {
             if (model == null)
                 return BadRequest("Invalid data.");
 
-            var exists = await _tariffRepository.TariffExistsByNameAsync(model.Name);
-            if (exists)
-                return BadRequest("A tariff with this name already exists.");
+            // Check date overlap
+            var overlap = await _tariffRepository.TariffDateOverlapAsync(
+    model.Name,
+    model.EffectiveFrom ,  // in case you allow nullable start date
+    model.EffectiveTo ?? DateOnly.MaxValue      // null means "open ended"
+);
+
+
+            if (overlap)
+                return BadRequest("Tariff dates overlap with an existing tariff.");
 
             var tariff = new Tariff
             {
@@ -56,8 +64,11 @@ namespace AMI_WebAPI.Controllers
             };
 
             await _tariffRepository.AddTariffAsync(tariff);
+
             return Ok(new { message = "Tariff added successfully!" });
         }
+
+
 
         // 🔹 4. Update existing tariff
         [HttpPut("update-tariff/{id}")]

@@ -28,6 +28,20 @@ namespace AMI_WebAPI.Data.Repository
             await _context.SaveChangesAsync();
         }
 
+        public async Task<bool> TariffDateOverlapAsync(string name, DateOnly from, DateOnly to)
+        {
+            return await _context.Tariffs
+                .AnyAsync(t =>
+                    t.Name == name &&
+                    (
+                        (from >= t.EffectiveFrom && from <= t.EffectiveTo) ||
+                        (to >= t.EffectiveFrom && to <= t.EffectiveTo) ||
+                        (from <= t.EffectiveFrom && to >= t.EffectiveTo)
+                    )
+                );
+        }
+
+
         public async Task UpdateTariffAsync(Tariff tariff)
         {
             _context.Tariffs.Update(tariff);
