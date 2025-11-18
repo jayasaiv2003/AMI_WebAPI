@@ -48,6 +48,9 @@ namespace AMI_WebAPI.Controllers
             if (dbUser.PasswordHash != user.Password)
                 return Unauthorized("Invalid password.");
 
+            dbUser.LastLogin = DateTime.UtcNow;
+            await _userRepository.UpdateLastLoginAsync(dbUser);
+
             // 3️⃣ Generate token for Staff role
             var staffToken = GenerateJwtToken(dbUser.Username, "Staff");
 
@@ -69,6 +72,50 @@ namespace AMI_WebAPI.Controllers
             var role = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
             return Ok($"Hello {username}, you are logged in as {role}!");
         }
+
+        // ✅ POST: api/Auth/register (Create new Staff/User)
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterModel model)
+        {
+            if (string.IsNullOrWhiteSpace(model.Username) ||
+                string.IsNullOrWhiteSpace(model.Password) ||
+                string.IsNullOrWhiteSpace(model.DisplayName) ||
+                string.IsNullOrWhiteSpace(model.Email))
+            {
+                return BadRequest("All fields are required.");
+            }
+
+            // ❌ Check if username already exists
+            var existingUser = await _userRepository.GetUserByUsernameAsync(model.Username);
+            if (existingUser != null)
+                return Conflict("Username is already taken.");
+
+            // ❌ Check if email already exists
+            var emailExists = await _userRepository.EmailExistsAsync(model.Email);
+            if (emailExists)
+                return Conflict("Email is already registered.");
+
+            var newUser = new User
+            {
+                Username = model.Username.Trim(),
+                DisplayName = model.DisplayName.Trim(),
+                Email = model.Email.Trim(),
+                Phone = model.Phone?.Trim(),
+                PasswordHash = model.Password,   // ⚠ storing raw password as per your request
+                IsActive = true,
+                LastLogin = null
+            };
+
+            await _userRepository.CreateUserAsyncDirect(newUser);
+
+            return Ok(new
+            {
+                message = "User registered successfully!",
+                username = newUser.Username,
+                email = newUser.Email
+            });
+        }
+
 
         // 🔐 JWT generator
         private string GenerateJwtToken(string username, string role)
@@ -98,10 +145,21 @@ namespace AMI_WebAPI.Controllers
         }
     }
 
+
     // ✅ Login model
     public class LoginModel
     {
         public string Username { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
     }
+
+    public class RegisterModel
+    {
+        public string Username { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string? Phone { get; set; }
+        public string Password { get; set; } = string.Empty;
+    }
+
 }

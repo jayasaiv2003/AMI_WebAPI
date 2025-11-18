@@ -33,6 +33,12 @@ namespace AMI_WebAPI.Data.Repository
 
         Task<Consumer?> GetConsumerByEmailAndPasswordAsync(string email, string password);
 
+        Task<bool> ChangePasswordAsync(ChangePasswordDTO dto);
+
+        Task<Consumer?> GetConsumerEntityAsync(long consumerId);
+        Task SaveAsync();
+
+        Task<Consumer?> GetConsumerByIdforreadingAsync(int consumerId);
 
     }
 }

@@ -1,5 +1,6 @@
-﻿using AMI_WebAPI.Models;
-using AMI_WebAPI.Data.Repository;
+﻿using AMI_WebAPI.Data.Repository;
+using AMI_WebAPI.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -46,6 +47,35 @@ namespace AMI_WebAPI.Controllers
             });
         }
 
+        [HttpPut("change-password")]
+        [Authorize(Roles = "Consumer")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordModel model)
+        {
+            var consumerId = long.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+            var consumer = await _consumerRepository.GetConsumerByIdAsync(consumerId);
+            if (consumer == null)
+                return NotFound("Consumer not found.");
+
+            // ❗ You must fetch Consumer directly from _context, not DTO
+            var dbConsumer = await _consumerRepository.GetConsumerEntityAsync(consumerId);
+            if (dbConsumer == null)
+                return NotFound("Consumer not found.");
+
+            // 🔐 Check old password
+            if (dbConsumer.Password != model.OldPassword)
+                return BadRequest("Old password is incorrect.");
+
+            // 🔄 Update password
+            dbConsumer.Password = model.NewPassword;
+            dbConsumer.UpdatedAt = DateTime.UtcNow;
+
+            await _consumerRepository.SaveAsync();
+
+            return Ok("Password updated successfully.");
+        }
+
+
 
         private string GenerateJwtToken(long consumerId, string email, string role)
         {
@@ -82,5 +112,11 @@ namespace AMI_WebAPI.Controllers
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;  // ✅ use Password instead of Name
     }
+    public class ChangePasswordModel
+    {
+        public string OldPassword { get; set; } = string.Empty;
+        public string NewPassword { get; set; } = string.Empty;
+    }
+
 
 }

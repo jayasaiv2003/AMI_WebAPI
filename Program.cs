@@ -36,6 +36,7 @@ namespace AMI_WebAPI
             builder.Services.AddScoped<IConsumerRepository, ConsumerRepository>();
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<IBillingRepository, BillingRepository>();
+            builder.Services.AddScoped<IReadingRepository, ReadingRepository>();
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowUI", policy =>

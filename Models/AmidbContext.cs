@@ -49,6 +49,7 @@ public partial class AmidbContext : DbContext
                 .HasDefaultValueSql("(sysutcdatetime())");
             entity.Property(e => e.CreatedBy).HasMaxLength(50);
             entity.Property(e => e.Email).HasMaxLength(200);
+            entity.HasIndex(e => e.Email).IsUnique();
             entity.Property(e => e.Name).HasMaxLength(200);
             entity.Property(e => e.Phone).HasMaxLength(30);
             entity.Property(e => e.Status)
@@ -118,6 +119,8 @@ public partial class AmidbContext : DbContext
                 .HasColumnName("IMSI");
             entity.Property(e => e.InstallTsUtc).HasPrecision(3);
             entity.Property(e => e.IpAddress).HasMaxLength(45);
+            entity.HasIndex(e => e.IpAddress).IsUnique();
+
             entity.Property(e => e.Manufacturer).HasMaxLength(100);
             entity.Property(e => e.Status)
                 .HasMaxLength(20)
@@ -174,6 +177,8 @@ public partial class AmidbContext : DbContext
             entity.Property(e => e.Type)
                 .HasMaxLength(20)
                 .IsUnicode(false);
+
+            entity.HasIndex(e => e.Name).IsUnique();
 
             entity.HasOne(d => d.Parent).WithMany(p => p.InverseParent)
                 .HasForeignKey(d => d.ParentId)

@@ -102,5 +102,29 @@ namespace AMI_WebAPI.Data.Repository
                     && u.IsActive);
         }
 
+        public async Task<bool> EmailExistsAsync(string email)
+        {
+            return await _context.Users
+                .AnyAsync(u => u.Email.ToLower().Trim() == email.ToLower().Trim());
+        }
+
+        public async Task<User> CreateUserAsyncDirect(User user)
+        {
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+            return user;
+        }
+
+        public async Task UpdateLastLoginAsync(User user)
+        {
+            var existingUser = await _context.Users.FindAsync(user.UserId);
+
+            if (existingUser != null)
+            {
+                existingUser.LastLogin = user.LastLogin;
+                await _context.SaveChangesAsync();
+            }
+        }
+
     }
 }

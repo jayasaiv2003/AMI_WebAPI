@@ -12,5 +12,13 @@ namespace AMI_WebAPI.Data.Repository
         Task<bool> DeleteUserAsync(int id);
 
         Task<User?> GetUserByUsernameAsync(string username);
+
+
+        Task<bool> EmailExistsAsync(string email);
+        Task<User> CreateUserAsyncDirect(User user);
+
+        Task UpdateLastLoginAsync(User user);
+
+
     }
 }

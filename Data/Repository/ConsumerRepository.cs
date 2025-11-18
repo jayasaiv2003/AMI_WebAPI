@@ -86,7 +86,8 @@ namespace AMI_WebAPI.Data.Repository
                 Email = dto.Email,
                 Status = dto.Status,
                 CreatedAt = DateTime.UtcNow,
-                CreatedBy = dto.CreatedBy
+                CreatedBy = dto.CreatedBy,
+                Password= "default@123"
             };
 
             _context.Consumers.Add(entity);
@@ -203,6 +204,46 @@ namespace AMI_WebAPI.Data.Repository
             return await _context.Consumers
                 .FirstOrDefaultAsync(c => c.Email == email && c.Password == password);
         }
+
+        public async Task<bool> ChangePasswordAsync(ChangePasswordDTO dto)
+        {
+            var consumer = await _context.Consumers
+                .FirstOrDefaultAsync(c => c.ConsumerId == dto.ConsumerId);
+
+            if (consumer == null)
+                return false;
+
+            // Password match check
+            if (consumer.Password != dto.OldPassword)
+                return false;
+
+            // Update password
+            consumer.Password = dto.NewPassword;
+            consumer.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<Consumer?> GetConsumerEntityAsync(long consumerId)
+        {
+            return await _context.Consumers.FirstOrDefaultAsync(c => c.ConsumerId == consumerId);
+        }
+
+        public async Task SaveAsync()
+        {
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<Consumer?> GetConsumerByIdforreadingAsync(int consumerId)
+        {
+            return await _context.Consumers
+         .Include(c => c.Meters)
+         .FirstOrDefaultAsync(c => c.ConsumerId == consumerId);
+        }
+
+
+
 
     }
 }
